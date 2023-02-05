@@ -1,0 +1,100 @@
+---
+title: "Demonstration of R Markdown"
+author: "JAS"
+output:
+  word_document: default
+  html_document: default
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## R Markdown Demonstration using Breast Imaging Data
+Data Citation: This breast cancer database was obtained from the University of Wisconsin Hospitals, Madison from Dr. William H. Wolberg.
+See Machine learning techniques to diagnose breast cancer from image-processed nuclear features of fine needle aspirates. Cancer Letters 1994; 77:163-171.
+
+***
+
+### Step 1: Load Packages
+We will be using two packages in addition to base R.
+Amelia is for missing data and will provide us with a plot of missingness.
+Caret is primarly from classification and regression trees, but has many features that are useful for data preprocessing. We will be using a function to partition data into training and testing.
+
+```{r packages}
+
+#install.packages("caret")
+
+library(Amelia)
+library(caret)
+library(tidyverse)
+```
+### Step 2: Load Data into R Environment and Perform Data Cleaning
+#### Illustrates the following:
+1. How to load a flat text file
+2. How to assign column names when none are provided
+3. How to check variable types across the dataframe
+4. How to recode missing indicators, change variable types and explore variable distributions
+5. Create a quick plot to indicate missingness
+6. Remove duplicates and missings
+7. Create a quick and dirty plot to compare features across outcome levels
+```{r data_prepare }
+
+bc.data<-read.csv("C:/Users/js5406/OneDrive - cumc.columbia.edu/EPIC Course/breast-cancer-wisconsin.data.txt", header=FALSE)
+
+var.names<-c("id", "clump_thickness", "uniformity_csize", "uniformity_cshape", "marg_adhesion", "single_ecell_size", "bare_nuclei", "b_chromatin", "normal_nucleoli", "mitoses", "outcome")
+
+colnames(bc.data)<-var.names
+str(bc.data)
+
+bc.data[bc.data=="?"]<-NA
+bc.data$bare_nuclei<-as.numeric(bc.data$bare_nuclei)
+
+bc.data$outcome<-as.factor(bc.data$outcome)
+levels(bc.data$outcome)<-c("Benign", "Malignant")
+str(bc.data)
+
+summary(bc.data)
+
+missmap(bc.data, main = "Missing values vs observed")
+
+#Remove missings
+bc.data<-na.omit(bc.data)
+
+#Remove duplicate IDs
+bc.data=bc.data %>% distinct(id, .keep_all=TRUE)
+
+#Quick plot comparing clump thickness across Outcome Groups
+ggplot(bc.data, aes(y=clump_thickness, x=outcome)) + 
+  geom_boxplot()+theme_classic()
+
+
+```
+
+```
+### Step 3: Construct logistic regression models to predict Malignancy
+* Model 1: Include all features
+* Model 2: Include only clump thickness
+```{r logitmodels}
+
+model.1 <- glm(outcome ~ . ,family=binomial(link='logit'),data=bc.data)
+summary(model.1)
+confint(model.1)
+
+model.2<-glm(outcome ~ clump_thickness, family=binomial(link='logit'), data=bc.data)
+summary(model.2)
+ci<-confint(model.2)
+
+#Extract results--simple base stats way
+OR<-exp(model.2$coefficients[2])
+LL<-exp(ci[2,1])
+UL<-exp(ci[2,2])
+
+```
+
+
+```
+
