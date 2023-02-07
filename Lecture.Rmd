@@ -1,6 +1,6 @@
 ---
-title: "Unsupervised Learning"
-author: "Week 4 Lecture"
+title: "Week 4: Unsupervised Learning"
+author: "Lectured by Jeanette Stingone"
 date: "2023-02-07"
 output: github_document
 ---
@@ -13,4 +13,18 @@ knitr::opts_chunk$set(warning = FALSE, message = FALSE)
 library(tidyverse)
 library(caret)
 ```
+
+Hyperparameter vs. Parameter
+
+Hyperparameter is something the users can control of.
+Parameter is estimated by the model. Think about the betas in regression model, we put a dataset in and the model estimated the betas based on the dataset.
+
+When to use PCA vs. Clustering:
+* PCA - feature reduction
+* Clustering - multidimensional 
+
+When dealing with distance, we always scale.
+
+kmeans is used for continuous data.
+
 
