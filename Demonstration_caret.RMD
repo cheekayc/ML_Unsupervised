@@ -2,13 +2,14 @@
 title: "Demonstration of Caret for Machine Learning"
 author: "JAS"
 date: " "
-output:
+output: 
+  github_document: default
   html_document: default
   word_document: default
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
 ```
 ## Overview of the Caret Package
 
@@ -26,13 +27,13 @@ Primary functionalities of caret include:
 
 Helpful resources using caret:
 
-Max Kuhn's explainer of the caret package
-https://topepo.github.io/caret/model-training-and-tuning.html
+Max Kuhn's explainer of the [caret package](https://topepo.github.io/caret/model-training-and-tuning.html)
 
 Kuhn M. Building predictive models in R using the caret package. Journal of Statistical Software 2008;28(5) doi: 10.18637/jss.v028.i05
 
-Webinar, given by Max Kuhn, available on YouTube (~1 hour): https://www.youtube.com/watch?v=7Jbb2ItbTC4
+Webinar, given by Max Kuhn, available on [YouTube](https://www.youtube.com/watch?v=7Jbb2ItbTC4) (~1 hour)
 
+***
 
 ### Some useful functions for pre-processing
 ```{r dataclean}
@@ -40,72 +41,80 @@ library(tidyverse)
 library(caret)
 library(stats)
 
-bc.data<-read.csv("C:/Users/js5406/OneDrive - cumc.columbia.edu/EPIC Course/breast-cancer-wisconsin.data.txt", header=FALSE)
+set.seed(111)
 
-var.names<-c("id", "clump_thickness", "uniformity_csize", "uniformity_cshape", "marg_adhesion", "single_ecell_size", "bare_nuclei", "b_chromatin", "normal_nucleoli", "mitoses", "outcome")
+bc_data = read_delim("./breast_cancer_wisconsin.data.txt", col_names = FALSE)
 
-colnames(bc.data)<-var.names
-str(bc.data)
+var_names = 
+  c("id", "clump_thickness", "uniformity_csize", "uniformity_cshape", "marg_adhesion", "single_ecell_size", "bare_nuclei", "b_chromatin", "normal_nucleoli", "mitoses", "outcome")
 
-bc.data[bc.data=="?"]<-NA
-bc.data$bare_nuclei<-as.numeric(bc.data$bare_nuclei)
-bc.data$id<-as.character(bc.data$id)
+colnames(bc_data) = var_names
+str(bc_data)
 
-bc.data$outcome<-as.factor(bc.data$outcome)
-levels(bc.data$outcome)<-c("Benign", "Malignant")
-str(bc.data)
+bc_data[bc_data == "?"] = NA
+bc_data$bare_nuclei = as_numeric(bc_data$bare_nuclei)
+bc_data$id = as.character(bc_data$id)
 
-summary(bc.data)
+bc_data$outcome = as.factor(bc_data$outcome)
+levels(bc_data$outcome) = c("Benign", "Malignant")
+str(bc_data)
 
-missmap(bc.data, main = "Missing values vs observed")
+summary(bc_data)
 
-#Remove missings
-bc.data<-na.omit(bc.data)
+missmap(bc_data, main = "Missing values vs observed")
 
-#Remove duplicate IDs
-bc.data=bc.data %>% distinct(id, .keep_all=TRUE)
+# Remove missings
+bc_data = na.omit(bc_data)
+
+# Remove duplicate IDs
+bc_data = bc_data %>% distinct(id, .keep_all = TRUE)
 ```
 
+Computer don't know which data are correlated. To find correlation, we must use numeric data. Then, we calculate correlation using the `cor` function.
+Once we have all the correlations, we can feed them into the `findCorrelation` function using any cutoff score that we want. 
 
+Applying *centering* and *scaling* to the dataset is very important for any algorithm that is using distance to create classification.
+
+A *balanced partitions* means that we have the same proportion of outcome in both the training and testing datasets.
 ```{r preprocess}
 #Finding correlated predictors
-bc.data.numeric<- bc.data %>% dplyr::select(where(is.numeric))
+bc_data_numeric = bc_data %>% dplyr::select(where(is.numeric))
 
-correlations<-cor(bc.data.numeric, use="complete.obs")
-high.correlations<-findCorrelation(correlations, cutoff=0.9)
+correlations = cor(bc_data_numeric, use = "complete.obs")
+high.correlations = findCorrelation(correlations, cutoff = 0.9)
+# This tells R to show me all the correlated features at 0.9 or above, and it will store them as an object.
 
 #Remove highly correlated features
-new.data.low.corr<-bc.data.numeric[,-high.correlations]
-
+new.data.low.corr = bc_data_numeric[,-high.correlations]
 
 #Centering and Scaling
-set.up.preprocess<-preProcess(bc.data.numeric, method=c("center", "scale"))
+set.up.preprocess = preProcess(bc_data_numeric, method = c("center", "scale"))
 #Output pre-processed values
-transformed.vals<-predict(set.up.preprocess, bc.data.numeric)
+transformed.vals = predict(set.up.preprocess, bc_data_numeric)
 
 set.seed(111)
 #Strip off ID var
-bc.data$id<-NULL
+bc.data$id = NULL
 
 #Creating balanced partitions in the data
-train.index<-createDataPartition(bc.data$outcome, p=0.7, list=FALSE)
+train.index = createDataPartition(bc_data$outcome, p = 0.7, list = FALSE)
 
-bc.train<-bc.data[train.index,]
-bc.test<-bc.data[-train.index,]
+bc.train = bc_data[train.index,]
+bc.test = bc_data[-train.index,]
 
 
 #Construct k-folds in your data
-train.folds<-createFolds(bc.data$outcome, k=10, list=FALSE)
+train.folds = createFolds(bc_data$outcome, k = 10, list = FALSE)
 
 ```
 
 ### Model Training and Tuning
 
-
 ```{r models}
-
+# See what algorithms Caret can do
 names(getModelInfo())
 
+# We can look up some models and see what they can do (i.e. what parameters can be tuned, what can be used (regression, classification, etc.))
 modelLookup("rpart")
 modelLookup("adaboost")
 
@@ -122,7 +131,7 @@ control.settings.b<-trainControl(method="repeatedcv", number=10, repeats=10)
 #Add into train function
 set.seed(111)
 logit <- train(
- outcome ~., data = bc.train, method = "glm", family="binomial",
+ outcome ~ ., data = bc.train, method = "glm", family="binomial",
   trControl = control.settings)
 
 logit
