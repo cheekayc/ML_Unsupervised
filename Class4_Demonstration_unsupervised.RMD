@@ -3,6 +3,7 @@ title: "Demonstration of Unsupervised Methods"
 author: "JAS"
 date: 
 output:
+  github_document: default
   html_document: default
   word_document: default
 editor_options:
