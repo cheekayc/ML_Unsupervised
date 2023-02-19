@@ -34,9 +34,9 @@ Ensure that all packages are installed. Note that the package `ggbiplot` is not 
 # install_github("vqv/ggbiplot")
 library(ggbiplot)
 
-library(stats)
-library(factoextra)
-library(cluster)
+library(stats) #PCA
+library(factoextra) # extract and visualize the output of exploratory multivariate data analyses, such as PCA
+library(cluster) 
 library(tidyverse)
 ```
 
