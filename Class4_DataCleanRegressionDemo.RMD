@@ -43,7 +43,7 @@ library(tidyverse)
 7. Create a quick and dirty plot to compare features across outcome levels
 ```{r data_prepare }
 
-bc.data<-read.csv("C:/Users/js5406/OneDrive - cumc.columbia.edu/EPIC Course/breast-cancer-wisconsin.data.txt", header=FALSE)
+bc.data<-read.csv("./Data/breast_cancer_wisconsin.data.txt", header = FALSE)
 
 var.names<-c("id", "clump_thickness", "uniformity_csize", "uniformity_cshape", "marg_adhesion", "single_ecell_size", "bare_nuclei", "b_chromatin", "normal_nucleoli", "mitoses", "outcome")
 
